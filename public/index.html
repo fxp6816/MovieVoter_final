@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Movie Voter</title>
+    <style>
+      .buttons-list {
+        max-width: 10rem;
+        min-height: 3rem;
+        /* background-color: red; */
+        list-style: none;
+        margin: auto;
+      }
+      .button {
+        display: inline;
+        min-width: 100px;
+        min-height: 100px;
+        margin: 0 1em 1em 0;
+      }
+      .title {
+        /*the font for the title goes here*/
+        font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS",
+          sans-serif;
+      }
+      #buttons-div {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      //this changes for the distro i think
+      const socket = io.connect("http://localhost:3000");
+
+      function voteA() {
+        socket.emit("vote", { voted: "a" });
+        document.getElementById("buttons-div").style.display = "none";
+      }
+      function voteB() {
+        socket.emit("vote", { voted: "b" });
+        document.getElementById("buttons-div").style.display = "none";
+      }
+
+      socket.on("voting opened", (vote) => {
+        document.getElementById("buttons-div").style.display = "block";
+      });
+      socket.on("voting closed", (vote) => {
+        document.getElementById("buttons-div").style.display = "none";
+      });
+    </script>
+    <h1 class="title">Fate</h1>
+    <div id="buttons-div">
+      <h2>Press one of the options</h2>
+      <ul class="buttons-list">
+        <li><button onclick="voteA()" id="btnA" class="button">A</button></li>
+        <li><button onclick="voteB()" id="btnA" class="button">B</button></li>
+      </ul>
+    </div>
+  </body>
+</html>

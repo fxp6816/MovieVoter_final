@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Movie Voter</title>
+    <style>
+      #bar-chart {
+        max-width: 400px;
+      }
+      body {
+        background-color: rgb(103, 97, 187);
+      }
+      .chart-bg {
+        background-color: white;
+        max-width: 400px;
+      }
+      #votingDoneChecker {
+        display: none;
+        color: red;
+      }
+      #votingClosed {
+        background-color: red;
+        padding: 5px;
+        border-radius: 5px;
+      }
+      #votingOpen {
+        background-color: green;
+        padding: 5px;
+        border-radius: 5px;
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <h1 class="title">Fate - admin bord</h1>
+
+    <div id="buttons-div">
+      <h2>
+        Voting:
+        <span color="red" id="votingClosed" class="indicator"> Closed</span>
+        <span color="green" id="votingOpen" class="indicator"> Opened</span>
+      </h2>
+      <h2>
+        Voting Status:
+        <span id="votingDoneChecker"> - Voting Done!!</span>
+      </h2>
+      <ul class="buttons-list">
+        <li>
+          <button onclick="startVoting()" id="btnA" class="button">
+            Start Voting
+          </button>
+        </li>
+        <li>
+          <button onclick="endVoting()" id="btnA" class="button">
+            End Voteing
+          </button>
+        </li>
+      </ul>
+      <div class="chart-bg">
+        <canvas id="bar-chart" width="400" height="200"></canvas>
+      </div>
+    </div>
+    <script>
+      const socket = io.connect("http://localhost:3000");
+
+      function startVoting() {
+        socket.emit("Open");
+      }
+      function endVoting() {
+        document.getElementById("votingDoneChecker").style.display = "none";
+        VoteDataA = 0;
+        VoteDataB = 0;
+        chart.data.datasets[0].data[0] = VoteDataA;
+        chart.data.datasets[0].data[1] = VoteDataB;
+
+        chart.update();
+        socket.emit("Closed");
+      }
+      var VoteDataA = 0;
+      var VoteDataB = 0;
+      var chart = new Chart(document.getElementById("bar-chart"), {
+        type: "bar",
+        data: {
+          labels: ["A", "B"],
+          datasets: [
+            {
+              backgroundColor: ["#3e95cd", "#8e5ea2"],
+              data: [VoteDataA, VoteDataB],
+            },
+          ],
+        },
+        options: {
+          scales: {
+            ticks: {
+              precision: 0,
+              beginAtZero: true,
+            },
+            y: {
+              suggestedMin: 0,
+              suggestedMax: 100,
+            },
+            x: {
+              beginAtZero: true,
+            },
+          },
+        },
+      });
+
+      socket.on("voting refresh", (voteObj) => {
+        if (voteObj.vote.localeCompare("a") == 0) {
+          VoteDataA++;
+        } else if (voteObj.vote.localeCompare("b") == 0) {
+          VoteDataB++;
+        }
+        console.log("A:" + VoteDataA);
+        console.log("B:" + VoteDataB);
+        if (voteObj.finished) {
+          document.getElementById("votingDoneChecker").style.display = "inline";
+        }
+
+        chart.data.datasets[0].data[0] = VoteDataA;
+        chart.data.datasets[0].data[1] = VoteDataB;
+        chart.update();
+      });
+
+      //react on emiting on voting open and close for feed back
+
+      socket.on("voting opened", () => {
+        document.getElementById("votingOpen").style.display = "inline";
+        document.getElementById("votingClosed").style.display = "none";
+      });
+      socket.on("voting closed", () => {
+        document.getElementById("votingOpen").style.display = "none";
+        document.getElementById("votingClosed").style.display = "inline";
+      });
+    </script>
+  </body>
+</html>
